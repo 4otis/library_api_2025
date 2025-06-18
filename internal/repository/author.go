@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/4otis/liarary_api_2025/internal/models"
+	"github.com/4otis/library_api_2025/internal/models"
 	"gorm.io/gorm"
 )
 
@@ -13,8 +13,8 @@ func NewAuthorRepository(db *gorm.DB) *AuthorRepository {
 	return &AuthorRepository{db: db}
 }
 
-func (ar AuthorRepository) Create(book *models.Author) error {
-	return ar.db.Create(book).Error
+func (ar AuthorRepository) Create(author *models.Author) error {
+	return ar.db.Create(author).Error
 }
 
 func (ar AuthorRepository) Read(id uint) (author *models.Author, err error) {
