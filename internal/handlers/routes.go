@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	// _ "github.com/4otis/library_api_2025/docs"
+	_ "github.com/4otis/library_api_2025/docs"
 	"github.com/4otis/library_api_2025/internal/repository"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"

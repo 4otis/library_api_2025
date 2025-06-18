@@ -18,6 +18,14 @@ func NewAuthorHandler(r *repository.AuthorRepository) *AuthorHandler {
 	return &AuthorHandler{repository: r}
 }
 
+// ListAuthors godoc
+// @Summary Get all authors
+// @Description Get details of all authors
+// @Tags authors
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} models.Author
+// @Router /authors [get]
 func (ah AuthorHandler) ListAuthors(c echo.Context) error {
 	authors, err := ah.repository.ReadAll()
 	if err != nil {
@@ -27,6 +35,17 @@ func (ah AuthorHandler) ListAuthors(c echo.Context) error {
 	return c.JSON(http.StatusOK, authors)
 }
 
+// GetAuthor godoc
+// @Summary Get author by ID
+// @Description Get detailed information about a specific author
+// @Tags authors
+// @Accept json
+// @Produce json
+// @Param id path int true "Author ID"
+// @Success 200 {object} models.Author
+// @Failure 400 {object} map[string]string "Invalid ID format"
+// @Failure 404 {object} map[string]string "Author not found"
+// @Router /authors/{id} [get]
 func (ah AuthorHandler) GetAuthor(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -41,6 +60,17 @@ func (ah AuthorHandler) GetAuthor(c echo.Context) error {
 	return c.JSON(http.StatusOK, author)
 }
 
+// CreateAuthor godoc
+// @Summary Create a new author
+// @Description Add a new author to the system
+// @Tags authors
+// @Accept json
+// @Produce json
+// @Param author body models.Author true "Author data"
+// @Success 201 {object} models.Author
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /authors [post]
 func (ah AuthorHandler) CreateAuthor(c echo.Context) error {
 	var author models.Author
 	err := c.Bind(&author)
@@ -56,6 +86,18 @@ func (ah AuthorHandler) CreateAuthor(c echo.Context) error {
 	return c.JSON(http.StatusCreated, author)
 }
 
+// UpdateAuthor godoc
+// @Summary Update author information
+// @Description Update existing author's data
+// @Tags authors
+// @Accept json
+// @Produce json
+// @Param id path int true "Author ID"
+// @Param author body models.Author true "Updated author data"
+// @Success 204 "No content"
+// @Failure 400 {object} map[string]string "Invalid ID format or request body"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /authors/{id} [put]
 func (ah AuthorHandler) UpdateAuthor(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -75,6 +117,17 @@ func (ah AuthorHandler) UpdateAuthor(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// DeleteAuthor godoc
+// @Summary Delete an author
+// @Description Remove author from the system
+// @Tags authors
+// @Accept json
+// @Produce json
+// @Param id path int true "Author ID"
+// @Success 204 "No content"
+// @Failure 400 {object} map[string]string "Invalid ID format"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /authors/{id} [delete]
 func (ah AuthorHandler) DeleteAuthor(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
