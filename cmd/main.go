@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // @title Library API
@@ -20,7 +21,9 @@ func main() {
 
 	// TODO: подключение к БД
 	dsn := "host=localhost user=postgres password=password dbname=library port=5432 sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 	if err != nil {
 		log.Fatal("Error. Failed to connect to db.")
 	}
