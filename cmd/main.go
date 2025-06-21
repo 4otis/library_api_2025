@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/4otis/library_api_2025/internal/handlers"
-	"github.com/4otis/library_api_2025/internal/models"
+	"github.com/4otis/library_api_2025/internal/migrations"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/driver/postgres"
@@ -29,13 +29,23 @@ func main() {
 	}
 
 	// TODO: создание миграции
-	err = db.AutoMigrate(&models.Book{}, &models.Author{})
+	// err = db.AutoMigrate(&models.Book{}, &models.Author{})
+	// if err != nil {
+	// 	log.Fatal("Error. Failed to migrate db.")
+	// }
+	err = migrations.RunInitMigrations(db)
 	if err != nil {
-		log.Fatal("Error. Failed to migrate db.")
+		log.Fatal("Error. Failed to migrated db.")
 	}
 
 	// TODO: запуск сервера
 	handlers.SetupRoutes(e, db)
 
 	e.Logger.Fatal(e.Start(":1323"))
+}
+
+func SetupTestServer(db *gorm.DB) *echo.Echo {
+	e := echo.New()
+	handlers.SetupRoutes(e, db)
+	return e
 }
