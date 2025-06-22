@@ -189,3 +189,83 @@ func TestGetAuthorHandler(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 	})
 }
+
+func TestListAuthorHandler(t *testing.T) {
+	e, db := setupAuthorHandler(t)
+	defer FreeTestDB(t, db)
+
+	// bookRepo := repository.NewBookRepository(db)
+	b1 := &models.Book{
+		Title: "b1",
+		Pages: 100,
+	}
+	b2 := &models.Book{
+		Title: "b2",
+		Pages: 200,
+	}
+	b3 := &models.Book{
+		Title: "b3",
+		Pages: 300,
+	}
+
+	authorRepo := repository.NewAuthorRepository(db)
+	authors := []*models.Author{
+		{
+			Name:  "a1",
+			Books: []*models.Book{b1},
+		},
+		{
+			Name:  "a2",
+			Books: []*models.Book{b1, b2},
+		},
+		{
+			Name:  "a3",
+			Books: []*models.Book{b2, b3},
+		},
+	}
+
+	for _, author := range authors {
+		require.NoError(t, authorRepo.Create(author))
+	}
+
+	t.Run("List Author - Success", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/authors", nil)
+		rec := httptest.NewRecorder()
+
+		e.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var response []models.Author
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+
+		assert.Len(t, response, 3, "excepted 3 authors")
+		for i := range 3 {
+			assert.Equal(t, authors[i].Name, response[i].Name)
+			assert.Equal(t, authors[i].Books[0].Title, response[i].Books[0].Title)
+		}
+
+		var cnt int64
+		db.Table("books_authors").Count(&cnt)
+		assert.Equal(t, int64(5), cnt, "excepted 5 notes in many2many table")
+	})
+
+	t.Run("List Author - Empty list", func(t *testing.T) {
+		db.Exec("delete from books_authors")
+		db.Exec("delete from books")
+		db.Exec("delete from authors")
+
+		req := httptest.NewRequest(http.MethodGet, "/authors", nil)
+		rec := httptest.NewRecorder()
+
+		e.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var response []models.Author
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+
+		assert.Empty(t, response, "response should be empty")
+	})
+
+}
