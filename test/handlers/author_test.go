@@ -1,4 +1,4 @@
-package library_test
+package handlers_test
 
 import (
 	"bytes"
@@ -12,36 +12,16 @@ import (
 	"github.com/4otis/library_api_2025/internal/migrations"
 	"github.com/4otis/library_api_2025/internal/models"
 	"github.com/4otis/library_api_2025/internal/repository"
+	testutils "github.com/4otis/library_api_2025/test"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func SetupTestDB(t *testing.T) *gorm.DB {
-	dsn := "host=localhost user=postgres password=password dbname=library port=5432 sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Error. Failed to connect to test DB: %v", err)
-	}
-
-	schema := "test_" + t.Name()
-	db.Exec("drop schema if exists " + schema + " cascade")
-	db.Exec("create schema " + schema)
-	db.Exec("set search_path to " + schema)
-
-	return db
-}
-
-func FreeTestDB(t *testing.T, db *gorm.DB) {
-	schema := "test_" + t.Name()
-	db.Exec("drop schema if exists " + schema + " cascade")
-}
-
 func setupAuthorHandler(t *testing.T) (*echo.Echo, *gorm.DB) {
 	e := echo.New()
-	db := SetupTestDB(t)
+	db := testutils.SetupTestDB(t)
 	err := migrations.RunInitMigrations(db)
 	if err != nil {
 		t.Fatal("Error. Failed to run InitMigrations.")
@@ -60,7 +40,7 @@ func setupAuthorHandler(t *testing.T) (*echo.Echo, *gorm.DB) {
 
 func TestCreateAuthorHandler(t *testing.T) {
 	e, db := setupAuthorHandler(t)
-	defer FreeTestDB(t, db)
+	defer testutils.FreeTestDB(t, db)
 
 	t.Run("Create Author - Success", func(t *testing.T) {
 		author := &models.Author{
@@ -155,7 +135,7 @@ func TestCreateAuthorHandler(t *testing.T) {
 
 func TestGetAuthorHandler(t *testing.T) {
 	e, db := setupAuthorHandler(t)
-	defer FreeTestDB(t, db)
+	defer testutils.FreeTestDB(t, db)
 
 	t.Run("Get Author - Success", func(t *testing.T) {
 		author := &models.Author{
@@ -193,7 +173,7 @@ func TestGetAuthorHandler(t *testing.T) {
 
 func TestListAuthorHandler(t *testing.T) {
 	e, db := setupAuthorHandler(t)
-	defer FreeTestDB(t, db)
+	defer testutils.FreeTestDB(t, db)
 
 	b1 := &models.Book{
 		Title: "b1",
@@ -272,7 +252,7 @@ func TestListAuthorHandler(t *testing.T) {
 
 func TestUpdateAuthorHandler(t *testing.T) {
 	e, db := setupAuthorHandler(t)
-	defer FreeTestDB(t, db)
+	defer testutils.FreeTestDB(t, db)
 
 	b1 := &models.Book{
 		Title: "b1",
@@ -360,7 +340,7 @@ func TestUpdateAuthorHandler(t *testing.T) {
 
 func TestDeleteAuthorHandler(t *testing.T) {
 	e, db := setupAuthorHandler(t)
-	defer FreeTestDB(t, db)
+	defer testutils.FreeTestDB(t, db)
 
 	b1 := &models.Book{
 		Title: "b1",
