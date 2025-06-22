@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 	"github.com/4otis/library_api_2025/internal/models"
 	"github.com/4otis/library_api_2025/internal/repository"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 type AuthorHandler struct {
@@ -96,6 +98,7 @@ func (ah AuthorHandler) CreateAuthor(c echo.Context) error {
 // @Param author body models.Author true "Updated author data"
 // @Success 204 "No content"
 // @Failure 400 {object} map[string]string "Invalid ID format or request body"
+// @Failure 404 {object} map[string]string "Author not found by entered id"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /authors/{id} [put]
 func (ah AuthorHandler) UpdateAuthor(c echo.Context) error {
@@ -112,7 +115,12 @@ func (ah AuthorHandler) UpdateAuthor(c echo.Context) error {
 
 	err = ah.repository.Update(uint(id), &author)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Error. Author not found (by id: %d).", id))
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
 	}
 	return c.NoContent(http.StatusNoContent)
 }

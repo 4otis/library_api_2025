@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 	"github.com/4otis/library_api_2025/internal/models"
 	"github.com/4otis/library_api_2025/internal/repository"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 type BookHandler struct {
@@ -95,6 +97,7 @@ func (bh BookHandler) CreateBook(c echo.Context) error {
 // @Param book body models.Book true "Updated book data"
 // @Success 204 "No content"
 // @Failure 400 {object} map[string]string "Invalid ID format or request body"
+// @Failure 404 {object} map[string]string "Book not found by entered id"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /books/{id} [put]
 func (bh BookHandler) UpdateBook(c echo.Context) error {
@@ -111,7 +114,12 @@ func (bh BookHandler) UpdateBook(c echo.Context) error {
 
 	err = bh.repository.Update(uint(id), &book)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Error. Book not found (by id: %d).", id))
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
 	}
 	return c.NoContent(http.StatusNoContent)
 }

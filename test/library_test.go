@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/4otis/library_api_2025/internal/handlers"
@@ -194,7 +195,6 @@ func TestListAuthorHandler(t *testing.T) {
 	e, db := setupAuthorHandler(t)
 	defer FreeTestDB(t, db)
 
-	// bookRepo := repository.NewBookRepository(db)
 	b1 := &models.Book{
 		Title: "b1",
 		Pages: 100,
@@ -266,6 +266,96 @@ func TestListAuthorHandler(t *testing.T) {
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
 
 		assert.Empty(t, response, "response should be empty")
+	})
+
+}
+
+func TestUpdateAuthorHandler(t *testing.T) {
+	e, db := setupAuthorHandler(t)
+	defer FreeTestDB(t, db)
+
+	b1 := &models.Book{
+		Title: "b1",
+		Pages: 100,
+	}
+	b2 := &models.Book{
+		Title: "b2",
+		Pages: 200,
+	}
+
+	authorRepo := repository.NewAuthorRepository(db)
+	authors := []*models.Author{
+		{
+			Name:  "a1",
+			Books: []*models.Book{b1},
+		},
+		{
+			Name:  "a2",
+			Books: []*models.Book{b2},
+		},
+	}
+
+	require.NoError(t, authorRepo.Create(authors[0]))
+
+	//update a1 by a2
+	t.Run("Update Author - Success", func(t *testing.T) {
+		newAuthor := authors[1]
+		id := 1
+
+		body, _ := json.Marshal(newAuthor)
+
+		req := httptest.NewRequest(http.MethodPut, "/authors/"+strconv.Itoa(id), bytes.NewReader(body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		e.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+
+		updatedAuthor, err := authorRepo.Read(uint(id))
+		require.NoError(t, err, "failed to read updated author")
+
+		assert.Equal(t, newAuthor.Name, updatedAuthor.Name)
+		assert.Equal(t, newAuthor.Books[0].Title, updatedAuthor.Books[0].Title)
+
+	})
+
+	t.Run("Update Author - Partial update", func(t *testing.T) {
+		id := 1
+		newAuthor := authors[0]
+		newAuthor.Name = authors[1].Name
+
+		body, _ := json.Marshal(newAuthor)
+
+		req := httptest.NewRequest(http.MethodPut, "/authors/"+strconv.Itoa(id), bytes.NewReader(body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		e.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+
+		updatedAuthor, err := authorRepo.Read(uint(id))
+		require.NoError(t, err, "failed to read updated author")
+
+		assert.Equal(t, newAuthor.Name, updatedAuthor.Name)
+		assert.Equal(t, newAuthor.Books[0].Title, updatedAuthor.Books[0].Title)
+
+	})
+
+	//invalid update
+	t.Run("Update Author - Invalid ID (not found)", func(t *testing.T) {
+		id := 999
+		body, _ := json.Marshal(authors[0])
+
+		req := httptest.NewRequest(http.MethodPut, "/authors/"+strconv.Itoa(id), bytes.NewReader(body))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		e.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
 	})
 
 }
