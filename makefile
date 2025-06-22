@@ -2,7 +2,7 @@ run :
 	go run ./cmd/main.go
 
 init :
-	sudo sysytemctl restart docker
+	sudo systemctl restart docker
 	sudo docker compose up -d
 
 run_tests:
