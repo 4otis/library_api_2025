@@ -50,5 +50,5 @@ func (ar AuthorRepository) Update(id uint, newAuthor *models.Author) error {
 }
 
 func (ar AuthorRepository) Delete(id uint) error {
-	return ar.db.Select("Books").Delete(&models.Author{}, id).Error
+	return ar.db.Select("Books").Delete(&models.Author{Model: gorm.Model{ID: id}}).Error
 }

@@ -35,8 +35,8 @@ func SetupTestDB(t *testing.T) *gorm.DB {
 }
 
 func FreeTestDB(t *testing.T, db *gorm.DB) {
-	// schema := "test_" + t.Name()
-	// db.Exec("drop schema if exists " + schema + " cascade")
+	schema := "test_" + t.Name()
+	db.Exec("drop schema if exists " + schema + " cascade")
 }
 
 func setupAuthorHandler(t *testing.T) (*echo.Echo, *gorm.DB) {
@@ -297,7 +297,6 @@ func TestUpdateAuthorHandler(t *testing.T) {
 
 	require.NoError(t, authorRepo.Create(authors[0]))
 
-	//update a1 by a2
 	t.Run("Update Author - Success", func(t *testing.T) {
 		newAuthor := authors[1]
 		id := 1
@@ -343,7 +342,6 @@ func TestUpdateAuthorHandler(t *testing.T) {
 
 	})
 
-	//invalid update
 	t.Run("Update Author - Invalid ID (not found)", func(t *testing.T) {
 		id := 999
 		body, _ := json.Marshal(authors[0])
@@ -358,4 +356,52 @@ func TestUpdateAuthorHandler(t *testing.T) {
 
 	})
 
+}
+
+func TestDeleteAuthorHandler(t *testing.T) {
+	e, db := setupAuthorHandler(t)
+	defer FreeTestDB(t, db)
+
+	b1 := &models.Book{
+		Title: "b1",
+		Pages: 100,
+	}
+	b2 := &models.Book{
+		Title: "b2",
+		Pages: 200,
+	}
+
+	authorRepo := repository.NewAuthorRepository(db)
+	authors := []*models.Author{
+		{
+			Name:  "a1",
+			Books: []*models.Book{b1, b2},
+		},
+		{
+			Name:  "a2",
+			Books: []*models.Book{b2},
+		},
+	}
+
+	for _, author := range authors {
+		require.NoError(t, authorRepo.Create(author))
+	}
+
+	t.Run("Delete Author - Success", func(t *testing.T) {
+		id := 1
+
+		req := httptest.NewRequest(http.MethodDelete, "/authors/"+strconv.Itoa(id), nil)
+		rec := httptest.NewRecorder()
+
+		var cnt int64
+		db.Table("authors").Count(&cnt)
+		assert.Equal(t, int64(2), cnt)
+
+		e.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+
+		_, err := authorRepo.Read(uint(id))
+		require.Error(t, err)
+	})
 }

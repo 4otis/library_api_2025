@@ -50,5 +50,5 @@ func (br BookRepository) Update(id uint, newBook *models.Book) error {
 }
 
 func (br BookRepository) Delete(id uint) error {
-	return br.db.Select("Authors").Delete(&models.Book{}, id).Error
+	return br.db.Select("Authors").Delete(&models.Book{Model: gorm.Model{ID: id}}).Error
 }
