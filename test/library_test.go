@@ -34,8 +34,8 @@ func SetupTestDB(t *testing.T) *gorm.DB {
 }
 
 func FreeTestDB(t *testing.T, db *gorm.DB) {
-	schema := "test_" + t.Name()
-	db.Exec("drop schema if exists " + schema + " cascade")
+	// schema := "test_" + t.Name()
+	// db.Exec("drop schema if exists " + schema + " cascade")
 }
 
 func setupAuthorHandler(t *testing.T) (*echo.Echo, *gorm.DB) {
@@ -57,7 +57,7 @@ func setupAuthorHandler(t *testing.T) (*echo.Echo, *gorm.DB) {
 	return e, db
 }
 
-func TestAuthorCreateHandler(t *testing.T) {
+func TestCreateAuthorHandler(t *testing.T) {
 	e, db := setupAuthorHandler(t)
 	defer FreeTestDB(t, db)
 
@@ -150,4 +150,42 @@ func TestAuthorCreateHandler(t *testing.T) {
 		assert.Equal(t, int64(1), cnt)
 	})
 
+}
+
+func TestGetAuthorHandler(t *testing.T) {
+	e, db := setupAuthorHandler(t)
+	defer FreeTestDB(t, db)
+
+	t.Run("Get Author - Success", func(t *testing.T) {
+		author := &models.Author{
+			Name: "author1",
+		}
+		body, _ := json.Marshal(author)
+
+		req := httptest.NewRequest(http.MethodPost, "/authors", bytes.NewReader((body)))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		e.ServeHTTP(rec, req)
+
+		req = httptest.NewRequest(http.MethodGet, "/authors/1", nil)
+		rec = httptest.NewRecorder()
+
+		e.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		var resp models.Author
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+
+		assert.Equal(t, author.Name, resp.Name)
+	})
+
+	t.Run("Get Author - Invalid ID", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/authors/999", nil)
+		rec := httptest.NewRecorder()
+
+		e.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
 }
